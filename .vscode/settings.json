@@ -1,0 +1,20 @@
+{
+  "debug.javascript.usePreview": false,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": true
+  },
+  "eslint.validate": [
+      "javascript",
+      "vue"
+  ],
+  "eslint.format.enable": true,
+  "eslint.workingDirectories": [
+      "./src"
+  ],
+  "files.autoSave": "onFocusChange",
+  "vetur.validation.template": false,
+  "workbench.colorCustomizations": {
+      "statusBar.background": "#353535"
+  }
+}
