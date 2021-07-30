@@ -1,6 +1,6 @@
-# Quasar App (mobile-app)
+# Overwatch 2
 
-A Quasar Framework app
+A Quasar Framework app for personal domotic use.
 
 ## Install the dependencies
 ```bash
