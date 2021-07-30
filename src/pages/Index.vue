@@ -1,37 +1,72 @@
 <template>
   <div>
-    <q-banner v-if="error" inline-actions class="text-white bg-red">{{ error }}
+    <q-banner v-if="error" inline-actions class="text-white bg-red"
+      >{{ error }}
       <template v-slot:action>
         <q-btn flat color="white" label="Fermer" @click="closeError()" />
       </template>
     </q-banner>
-    <q-banner v-if="isConnecting" inline-actions class="text-white bg-green">Connection en cours au broker MQTT ...</q-banner>    
-    <q-banner v-if="!isConnecting && !isConnected" inline-actions class="text-white bg-red">Broker inaccessible !</q-banner>
-    <q-page v-if="isConnected" class="flex flex-center">
-      <q-list bordered>
-        <q-item clickable v-ripple>
-          <q-item-section> Volet roulant </q-item-section>
-          <q-item-section> {{ rollerShutter.progress }}% </q-item-section>
-          <q-item-section style="width: 200px" class="q-col-gutter row">
-            <q-btn
-              unelevated
-              rounded
-              label="Ouvrir"
-              color="primary"
-              @click="open"
-            />
-            &nbsp;
-            <q-btn
-              unelevated
-              rounded
-              label="Fermer"
-              color="primary"
-              @click="close"
-            />
-          </q-item-section>
-        </q-item>
-      </q-list>
-    </q-page>
+    <q-banner v-if="isConnecting" inline-actions class="text-white bg-green"
+      >Connection en cours au broker MQTT ...</q-banner
+    >
+    <q-banner
+      v-if="!isConnecting && !isConnected"
+      inline-actions
+      class="text-white bg-red"
+      >Broker inaccessible !</q-banner
+    >
+    <!-- <q-page v-if="!isConnecting && isConnected" class="flex flex-center"> -->
+
+    <div class="column items-center wrap q-gutter-md q-pa-md">
+      <q-card>
+        <q-card-section class="column wrap items-center">
+          <div class="text-h6">{{ rollerShutter.name }}</div>
+          <div class="text-subtitle1">{{ progress }}%</div>
+          <br />
+          <q-btn
+            unelevated
+            rounded
+            label="Ouvrir"
+            color="primary"
+            class="full-width" 
+            v-if="!rollerShutter.isClosing"
+            :loading="rollerShutter.isOpening"
+            @click="open()"
+          >
+          <template>
+            <q-spinner-radio/>
+            Ouverture ...
+          </template>
+          </q-btn>
+          &nbsp;
+          <q-btn
+            unelevated
+            rounded
+            label="Fermer"
+            color="primary"
+            class="full-width" 
+            v-if="!rollerShutter.isOpening"
+            :loading="rollerShutter.isClosing"
+            @click="close()"
+          >
+          <template>
+            <q-spinner-radio class="on-left" />
+            Click "Stop" Button
+          </template>
+          </q-btn>
+          &nbsp;
+          <q-btn
+            unelevated
+            rounded
+            label="Arrêter"
+            color="red"
+            class="full-width" 
+            v-if="rollerShutter.isOpening || rollerShutter.isClosing"
+            @click="stop()"
+          />
+        </q-card-section>
+      </q-card>
+    </div>
   </div>
 </template>
 
@@ -41,28 +76,37 @@ import * as mqtt from 'mqtt/dist/mqtt.min'
 
 export default defineComponent({
   name: 'PageIndex',
+  computed: {
+    progress() {
+      return Math.round(this.rollerShutter.openedAt)
+    }
+  },
   data() {
     return {
-      rollerShutter: {
-        id: 'tasmota_6C09EE',
-        progress: 0,
-        duration: 28000,
-        ratio: 100 / 28000,
-      },
       client: null,
       error: null,
       isConnected: false,
-      isConnecting: false
+      isConnecting: false,
+      rollerShutter: {
+        id: 'tasmota_6C09EE',
+        name: 'Vollet roulant sud',
+        duration: 28,
+        ratio: 100 / 28,
+        openedAt: 0,
+        isOpening: false,
+        isClosing: false,
+        interval: null
+      },
     }
   },
   created() {
     this.isConnecting = true
     this.client = mqtt.connect('ws://192.168.0.195:9001', {
       connectTimeout: 5 * 1000,
-      reconnectPeriod: 5000
+      reconnectPeriod: 0,
     })
 
-    this.client.on('connect', () => {      
+    this.client.on('connect', () => {
       this.isConnecting = false
       this.isConnected = true
       this.client.subscribe(`stat/${this.rollerShutter.id}/Power`, (err) => {
@@ -92,7 +136,7 @@ export default defineComponent({
       console.log(topic + ':' + message.toString())
     })
 
-    this.client.on('error', err => {
+    this.client.on('error', (err) => {
       console.log('error', err)
       this.error = err
     })
@@ -101,29 +145,52 @@ export default defineComponent({
     closeError() {
       this.error = null
     },
-    open() {
-      this.client.publish(`cmnd/${this.rollerShutter.id}/Power1`, '1')
-
-      setInterval(() => {
-        this.progress -= this.ratio
-      }, 1000)
-
-      setTimeout(() => {
+    stop() {
+      clearInterval(this.rollerShutter.interval)
+      if (this.rollerShutter.isOpening) {
+        this.rollerShutter.isOpening = false
         this.client.publish(`cmnd/${this.rollerShutter.id}/Power1`, '0')
-        this.progress = 0
-      }, this.rollerShutter.duration)
+      }
+      if (this.rollerShutter.isClosing) {
+        this.rollerShutter.isClosing = false
+        this.client.publish(`cmnd/${this.rollerShutter.id}/Power2`, '0')
+      }
+    },
+    open() {
+      if (this.rollerShutter.openedAt < 100 && !this.rollerShutter.isClosing) {
+        this.rollerShutter.isOpening = true
+
+        this.client.publish(`cmnd/${this.rollerShutter.id}/Power1`, '1')
+
+        this.rollerShutter.interval = setInterval(() => {
+          if(this.rollerShutter.openedAt < 100) {
+            this.rollerShutter.openedAt +=  this.rollerShutter.ratio
+          } else {
+            clearInterval(this.rollerShutter.interval)
+            this.rollerShutter.openedAt = 100
+            this.client.publish(`cmnd/${this.rollerShutter.id}/Power1`, '0')
+            this.rollerShutter.isOpening = false
+          }          
+        }, 1000)
+      }
     },
     close() {
-      this.client.publish(`cmnd/${this.rollerShutter.id}/Power2`, '1')
+      if (this.rollerShutter.openedAt > 0 && !this.rollerShutter.isOpening) {
+        this.rollerShutter.isClosing = true
 
-      setInterval(() => {
-        this.progress += this.ratio
-      }, 1000)
+        this.client.publish(`cmnd/${this.rollerShutter.id}/Power2`, '1')
 
-      setTimeout(() => {
-        this.client.publish(`cmnd/${this.rollerShutter.id}/Power2`, '0')
-        this.progress = 100
-      }, this.rollerShutter.duration)
+        this.rollerShutter.interval = setInterval(() => {
+          if(this.rollerShutter.openedAt > 0) {
+            this.rollerShutter.openedAt -= this.rollerShutter.ratio
+          } else {
+            clearInterval(this.rollerShutter.interval)
+            this.rollerShutter.openedAt = 0
+            this.client.publish(`cmnd/${this.rollerShutter.id}/Power2`, '0')
+            this.rollerShutter.isClosing = false
+          }
+        }, 1000)
+      }
     },
   },
 })
