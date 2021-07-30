@@ -11,7 +11,7 @@
           @click="toggleLeftDrawer"
         />
         <q-toolbar-title>Domotique</q-toolbar-title>
-        <div>v{{ $q.version }}</div>
+        <div>v{{ version }}</div>
       </q-toolbar>
     </q-header>
 
@@ -44,7 +44,9 @@
 </template>
 
 <script>
+import { defineComponent, ref } from 'vue'
 import EssentialLink from 'components/EssentialLink.vue'
+import pkg from '../../package.json'
 
 const linksList = [
   {
@@ -61,24 +63,20 @@ const linksList = [
   }
 ]
 
-import { defineComponent, ref } from 'vue'
-
 export default defineComponent({
   name: 'MainLayout',
-
   components: {
     EssentialLink,
   },
-
   setup() {
     const leftDrawerOpen = ref(false)
-
     return {
       essentialLinks: linksList,
       leftDrawerOpen,
       toggleLeftDrawer() {
         leftDrawerOpen.value = !leftDrawerOpen.value
       },
+      version: pkg.version
     }
   },
 })
