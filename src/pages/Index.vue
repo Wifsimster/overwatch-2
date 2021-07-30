@@ -15,9 +15,7 @@
       class="text-white bg-red"
       >Broker inaccessible !</q-banner
     >
-    <!-- <q-page v-if="!isConnecting && isConnected" class="flex flex-center"> -->
-
-    <div class="column items-center wrap q-gutter-md q-pa-md">
+    <div v-if="!isConnecting && isConnected" class="column items-center wrap q-gutter-md q-pa-md">
       <q-card>
         <q-card-section class="column wrap items-center">
           <div class="text-h6">{{ rollerShutter.name }}</div>
@@ -163,7 +161,7 @@ export default defineComponent({
         this.client.publish(`cmnd/${this.rollerShutter.id}/Power1`, '1')
 
         this.rollerShutter.interval = setInterval(() => {
-          if(this.rollerShutter.openedAt < 100) {
+          if(this.rollerShutter.openedAt < 100 - this.rollerShutter.ratio) {
             this.rollerShutter.openedAt +=  this.rollerShutter.ratio
           } else {
             clearInterval(this.rollerShutter.interval)
@@ -181,7 +179,7 @@ export default defineComponent({
         this.client.publish(`cmnd/${this.rollerShutter.id}/Power2`, '1')
 
         this.rollerShutter.interval = setInterval(() => {
-          if(this.rollerShutter.openedAt > 0) {
+          if(this.rollerShutter.openedAt > 0 + this.rollerShutter.ratio) {
             this.rollerShutter.openedAt -= this.rollerShutter.ratio
           } else {
             clearInterval(this.rollerShutter.interval)
