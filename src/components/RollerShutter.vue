@@ -10,13 +10,12 @@
             label="Ouvrir"
             color="primary"
             class="full-width" 
-            v-if="!device.isClosing"
-            :loading="device.isOpening"
+            v-if="!isClosing"
+            :loading="isOpening"
             @click="open()"
             >
             <template>
-            <q-spinner-radio/>
-            Ouverture ...
+                <q-spinner-radio/>
             </template>
             </q-btn>
             &nbsp;
@@ -26,13 +25,12 @@
             label="Fermer"
             color="primary"
             class="full-width" 
-            v-if="!device.isOpening"
-            :loading="device.isClosing"
+            v-if="!isOpening"
+            :loading="isClosing"
             @click="close()"
             >
             <template>
-            <q-spinner-radio class="on-left" />
-            Click "Stop" Button
+                <q-spinner-radio class="on-left" />
             </template>
             </q-btn>
             &nbsp;
@@ -42,7 +40,7 @@
             label="Arrêter"
             color="red"
             class="full-width" 
-            v-if="device.isOpening || device.isClosing"
+            v-if="isOpening || isClosing"
             @click="stop()"
             />
         </q-card-section>
@@ -57,53 +55,62 @@ export default defineComponent({
   props: [ 'client', 'device' ],
   computed: {
     progress() {
-      return Math.round(this.device.openedAt)
+      return Math.round(this.openedAt)
+    }
+  },
+  data() {
+    return {
+      ratio: 100 / this.device.duration,
+      openedAt: 0,
+      isOpening: false,
+      isClosing: false,
+      interval: null
     }
   },
   methods: {
     stop() {
-      clearInterval(this.rollerShutter.interval)
-      if (this.rollerShutter.isOpening) {
-        this.rollerShutter.isOpening = false
-        this.client.publish(`cmnd/${this.rollerShutter.id}/Power1`, '0')
+      clearInterval(this.interval)
+      if (this.isOpening) {
+        this.isOpening = false
+        this.client.publish(`cmnd/${this.device.id}/Power1`, '0')
       }
-      if (this.rollerShutter.isClosing) {
-        this.rollerShutter.isClosing = false
-        this.client.publish(`cmnd/${this.rollerShutter.id}/Power2`, '0')
+      if (this.isClosing) {
+        this.isClosing = false
+        this.client.publish(`cmnd/${this.device.id}/Power2`, '0')
       }
     },
     open() {
-      if (this.rollerShutter.openedAt < 100 && !this.rollerShutter.isClosing) {
-        this.rollerShutter.isOpening = true
+      if (this.openedAt < 100 && !this.isClosing) {
+        this.isOpening = true
 
-        this.client.publish(`cmnd/${this.rollerShutter.id}/Power1`, '1')
+        this.client.publish(`cmnd/${this.device.id}/Power1`, '1')
 
-        this.rollerShutter.interval = setInterval(() => {
-          if(this.rollerShutter.openedAt < 100 - this.rollerShutter.ratio) {
-            this.rollerShutter.openedAt +=  this.rollerShutter.ratio
+        this.interval = setInterval(() => {
+          if(this.openedAt < 100 - this.ratio) {
+            this.openedAt +=  this.ratio
           } else {
-            clearInterval(this.rollerShutter.interval)
-            this.rollerShutter.openedAt = 100
-            this.client.publish(`cmnd/${this.rollerShutter.id}/Power1`, '0')
-            this.rollerShutter.isOpening = false
+            clearInterval(this.interval)
+            this.openedAt = 100
+            this.client.publish(`cmnd/${this.device.id}/Power1`, '0')
+            this.isOpening = false
           }          
         }, 1000)
       }
     },
     close() {
-      if (this.rollerShutter.openedAt > 0 && !this.rollerShutter.isOpening) {
-        this.rollerShutter.isClosing = true
+      if (this.openedAt > 0 && !this.isOpening) {
+        this.isClosing = true
 
-        this.client.publish(`cmnd/${this.rollerShutter.id}/Power2`, '1')
+        this.client.publish(`cmnd/${this.device.id}/Power2`, '1')
 
-        this.rollerShutter.interval = setInterval(() => {
-          if(this.rollerShutter.openedAt > 0 + this.rollerShutter.ratio) {
-            this.rollerShutter.openedAt -= this.rollerShutter.ratio
+        this.interval = setInterval(() => {
+          if(this.openedAt > 0 + this.ratio) {
+            this.openedAt -= this.ratio
           } else {
-            clearInterval(this.rollerShutter.interval)
-            this.rollerShutter.openedAt = 0
-            this.client.publish(`cmnd/${this.rollerShutter.id}/Power2`, '0')
-            this.rollerShutter.isClosing = false
+            clearInterval(this.interval)
+            this.openedAt = 0
+            this.client.publish(`cmnd/${this.device.id}/Power2`, '0')
+            this.isClosing = false
           }
         }, 1000)
       }

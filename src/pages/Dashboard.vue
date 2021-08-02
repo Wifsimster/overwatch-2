@@ -27,11 +27,11 @@ import { defineComponent } from 'vue'
 import * as mqtt from 'mqtt/dist/mqtt.min'
 import RollerShutter from '../components/RollerShutter.vue'
 
+const MQTT_BROKER = 'ws://192.168.0.195:9001'
+
 export default defineComponent({
   name: 'Dashboard',
-  components: {
-    'roller-shutter': RollerShutter
-  },
+  components: { RollerShutter },
   data() {
     return {
       client: null,
@@ -42,17 +42,12 @@ export default defineComponent({
         id: 'tasmota_6C09EE',
         name: 'Vollet roulant sud',
         duration: 28,
-        ratio: 100 / 28,
-        openedAt: 0,
-        isOpening: false,
-        isClosing: false,
-        interval: null
       },
     }
   },
   created() {
     this.isConnecting = true
-    this.client = mqtt.connect('ws://192.168.0.195:9001', {
+    this.client = mqtt.connect(MQTT_BROKER, {
       connectTimeout: 5 * 1000,
       reconnectPeriod: 0,
     })
