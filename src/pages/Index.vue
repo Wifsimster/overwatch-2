@@ -15,55 +15,9 @@
       class="text-white bg-red"
       >Broker inaccessible !</q-banner
     >
-    <div v-if="!isConnecting && isConnected" class="column items-center wrap q-gutter-md q-pa-md">
-      <q-card>
-        <q-card-section class="column wrap items-center">
-          <div class="text-h6">{{ rollerShutter.name }}</div>
-          <div class="text-subtitle1">{{ progress }}%</div>
-          <br />
-          <q-btn
-            unelevated
-            rounded
-            label="Ouvrir"
-            color="primary"
-            class="full-width" 
-            v-if="!rollerShutter.isClosing"
-            :loading="rollerShutter.isOpening"
-            @click="open()"
-          >
-          <template>
-            <q-spinner-radio/>
-            Ouverture ...
-          </template>
-          </q-btn>
-          &nbsp;
-          <q-btn
-            unelevated
-            rounded
-            label="Fermer"
-            color="primary"
-            class="full-width" 
-            v-if="!rollerShutter.isOpening"
-            :loading="rollerShutter.isClosing"
-            @click="close()"
-          >
-          <template>
-            <q-spinner-radio class="on-left" />
-            Click "Stop" Button
-          </template>
-          </q-btn>
-          &nbsp;
-          <q-btn
-            unelevated
-            rounded
-            label="Arrêter"
-            color="red"
-            class="full-width" 
-            v-if="rollerShutter.isOpening || rollerShutter.isClosing"
-            @click="stop()"
-          />
-        </q-card-section>
-      </q-card>
+    <!-- <div v-if="!isConnecting && isConnected" class="column items-center wrap q-gutter-md q-pa-md"> -->
+    <div class="column items-center wrap q-gutter-md q-pa-md">
+      <roller-shutter :device="rollerShutter" />
     </div>
   </div>
 </template>
@@ -71,13 +25,12 @@
 <script>
 import { defineComponent } from 'vue'
 import * as mqtt from 'mqtt/dist/mqtt.min'
+import RollerShutter from '../components/RollerShutter.vue'
 
 export default defineComponent({
   name: 'PageIndex',
-  computed: {
-    progress() {
-      return Math.round(this.rollerShutter.openedAt)
-    }
+  components: {
+    'roller-shutter': RollerShutter
   },
   data() {
     return {
