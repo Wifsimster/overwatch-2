@@ -15,9 +15,11 @@
       class="text-white bg-red"
       >Broker inaccessible !</q-banner
     >
-    <!-- <div v-if="!isConnecting && isConnected" class="column items-center wrap q-gutter-md q-pa-md"> -->
-    <div class="column items-center wrap q-gutter-md q-pa-md">
-      <roller-shutter :client="client" :device="rollerShutter_01" />
+    <div v-if="!isConnecting && isConnected" class="column items-center wrap q-gutter-md q-pa-md">
+    <!-- <div class="column items-center wrap q-gutter-md q-pa-md"> -->
+      <div v-for="device in devices" :key="device.id">
+        <roller-shutter v-if="device.id === 'tasmota_6C09EE'" :client="mqttClient" :device="device" />
+      </div>
     </div>
   </div>
 </template>
@@ -34,7 +36,7 @@ export default defineComponent({
   components: { RollerShutter },
   data() {
     return {
-      client: null,
+      mqttClient: null,
       error: null,
       isConnected: false,
       isConnecting: false,
@@ -43,37 +45,38 @@ export default defineComponent({
         name: 'Vollet roulant sud',
         duration: 28,
       },
+      devices: null
     }
   },
-  created() {
+  created() { 
     this.isConnecting = true
-    this.client = mqtt.connect(MQTT_BROKER, {
+    this.mqttClient = mqtt.connect(MQTT_BROKER, {
       connectTimeout: 5 * 1000,
       reconnectPeriod: 0,
     })
 
-    this.client.on('connect', () => {
+    this.mqttClient.on('connect', () => {
       this.isConnecting = false
       this.isConnected = true
     })
 
-    this.client.on('reconnect', () => {
+    this.mqttClient.on('reconnect', () => {
       console.log('reconnect')
       this.isConnecting = true
       this.isConnected = false
     })
 
-    this.client.on('close', () => {
+    this.mqttClient.on('close', () => {
       console.log('close')
       this.isConnecting = false
       this.isConnected = false
     })
 
-    this.client.on('message', (topic, message) => {
+    this.mqttClient.on('message', (topic, message) => {
       console.log(topic + ':' + message.toString())
     })
 
-    this.client.on('error', (err) => {
+    this.mqttClient.on('error', (err) => {
       console.log('error', err)
       this.error = err
     })
@@ -83,5 +86,12 @@ export default defineComponent({
       this.error = null
     },
   },
+  watch: {
+    async isConnected(status) {
+      if(status) {
+        this.devices = await (await fetch('http://192.168.0.25:9002/state')).json()
+      }
+    }
+  }
 })
 </script>
