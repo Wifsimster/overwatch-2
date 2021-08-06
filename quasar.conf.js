@@ -138,9 +138,9 @@ module.exports = configure((ctx) => ({
     },
 
     manifest: {
-      name: 'Quasar App',
-      short_name: 'Quasar App',
-      description: 'A Quasar Framework app',
+      name: 'Overwatch',
+      short_name: 'Overwatch',
+      description: 'A domotic pwa',
       display: 'standalone',
       orientation: 'portrait',
       background_color: '#ffffff',
