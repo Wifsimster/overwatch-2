@@ -8,7 +8,7 @@
 
         <q-card-section class="q-pt-none">
           <q-input v-model="name" placeholder="Name" />
-          <q-input type="number" v-model="duration" placeholder="Duration" />
+          <q-input type="number" min="1" max="30" v-model="duration" placeholder="Duration" hint="Time the roller shutter take to open completely " />
         </q-card-section>
 
         <q-card-actions align="right">
@@ -44,9 +44,14 @@ export default {
     this.duration = this.device?.duration
   },
   methods: {
+    validate() {
+      return this.duration > 0 && this.duration <= 30
+    },
     async save() {
-      await setState(this.device.id, { name: this.name, duration: this.duration })
-      this.isOpen = false
+      if(this.validate()) {
+        await setState(this.device.id, { name: this.name, duration: this.duration })
+        this.isOpen = false
+      }
     }
   },
   watch: {
