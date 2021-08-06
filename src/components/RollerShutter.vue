@@ -50,18 +50,19 @@
         />
       </q-card-section>
     </q-card>
-    <roller-shutter-settings :device="device" :open="isSettingsOpen" />
+    <roller-shutter-settings @close="onCloseSettings()" :device="device" :open="isSettingsOpen" />
   </div>
 </template>
 
 <script>
 import { defineComponent } from 'vue'
 import RollerShutterSettings from 'components/RollerShutterSettings.vue'
-import { setState } from '../api/state.js'
+import { setDevice } from '../api/device.js'
 
 export default defineComponent({
   name: 'device',
   props: ['client', 'device'],
+  emits: ['update'],
   components: { RollerShutterSettings },
   computed: {
     progress() {
@@ -134,10 +135,14 @@ export default defineComponent({
         }, 1000)
       }
     },
+    onCloseSettings() {
+      this.isSettingsOpen = false
+      this.$emit('update')
+    },
   },
   watch: {
     async openedAt() {
-      await setState(this.device.id, { openedAt: this.openedAt })
+      await setDevice(this.device.id, { openedAt: this.openedAt })
     },
   },
 })

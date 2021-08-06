@@ -16,9 +16,9 @@
       >Broker inaccessible !</q-banner
     >
     <div v-if="!isConnecting && isConnected" class="column items-center wrap q-gutter-md q-pa-md">
-    <!-- <div class="column items-center wrap q-gutter-md q-pa-md"> -->
       <div v-for="device in devices" :key="device.id">
-        <roller-shutter v-if="device.id === 'tasmota_6C09EE'" :client="mqttClient" :device="device" />
+        <roller-shutter @update="setDevices()" v-if="device.status === 'Online' && device.model === 'Generic'" :client="mqttClient" :device="device" />
+        <!-- TODO: Add more device type component -->
       </div>
     </div>
   </div>
@@ -28,7 +28,7 @@
 import { defineComponent } from 'vue'
 import * as mqtt from 'mqtt/dist/mqtt.min'
 import RollerShutter from '../components/RollerShutter.vue'
-import { getStates } from 'src/api/state'
+import { getDevices } from '../api/device'
 
 const MQTT_BROKER = 'ws://192.168.0.195:9001'
 
@@ -81,11 +81,14 @@ export default defineComponent({
     closeError() {
       this.error = null
     },
+    async setDevices() {
+      this.devices = await getDevices()
+    }
   },
   watch: {
     async isConnected(status) {
       if(status) {
-        this.devices = await getStates()
+        await this.setDevices()
       }
     }
   }

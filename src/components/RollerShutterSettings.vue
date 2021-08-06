@@ -20,8 +20,9 @@
 </template>
 
 <script>
-import { setState } from 'src/api/state'
+import { setDevice } from '../api/device'
 export default {
+  emits: ['close'],
   props: {
     open: {
       type: Boolean,
@@ -49,8 +50,8 @@ export default {
     },
     async save() {
       if(this.validate()) {
-        await setState(this.device.id, { name: this.name, duration: this.duration })
-        this.isOpen = false
+        await setDevice(this.device.id, { name: this.name, duration: this.duration })
+        this.$emit('close')
       }
     }
   },
