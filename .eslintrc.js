@@ -26,8 +26,8 @@ module.exports = {
     chrome: 'readonly'
   },
   rules: {
-    'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
-    'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+    'no-console': 'off',
+    'no-debugger': 'off',
     indent: ['error', 2], // indent with 2 spaces
     quotes: ['error', 'single'], // force single quotes
     semi: ['error', 'never'], // remove semicolons
