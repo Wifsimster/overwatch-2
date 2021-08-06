@@ -8,6 +8,9 @@
       "app/*": [
         "*"
       ],
+      "api/*": [
+        "src/api/*"
+      ],
       "components/*": [
         "src/components/*"
       ],

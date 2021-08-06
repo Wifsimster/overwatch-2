@@ -1,58 +1,68 @@
 <template>
-  <q-card v-if="device">
-    <q-card-section class="column wrap items-center">
-      <div class="text-h6">{{ device.name || device.id }}</div>
-      <div class="text-subtitle1">{{ progress }}%</div>
-      <br />
-      <q-btn
-        unelevated
-        rounded
-        label="Ouvrir"
-        color="primary"
-        class="full-width"
-        v-if="!isClosing"
-        :loading="isOpening"
-        @click="open()"
-      >
-        <template>
-          <q-spinner-radio />
-        </template>
-      </q-btn>
-      &nbsp;
-      <q-btn
-        unelevated
-        rounded
-        label="Fermer"
-        color="primary"
-        class="full-width"
-        v-if="!isOpening"
-        :loading="isClosing"
-        @click="close()"
-      >
-        <template>
-          <q-spinner-radio class="on-left" />
-        </template>
-      </q-btn>
-      &nbsp;
-      <q-btn
-        unelevated
-        rounded
-        label="Arrêter"
-        color="red"
-        class="full-width"
-        v-if="isOpening || isClosing"
-        @click="stop()"
-      />
-    </q-card-section>
-  </q-card>
+  <div>
+    <q-card v-if="device">
+      <q-card-section class="column wrap items-center">
+        <div class="text-h6">{{ device.name || device.id }}
+          <q-icon name="settings" @click="openSettings()" />
+        </div>
+        <div class="text-subtitle1">Ouverture {{ progress }}%</div>
+        <br />
+        <q-btn
+          unelevated
+          rounded
+          label="Ouvrir"
+          color="primary"
+          class="full-width"
+          v-if="!isClosing"
+          :loading="isOpening"
+          :disable="progress === 100"
+          @click="open()"
+        >
+          <template>
+            <q-spinner-radio />
+          </template>
+        </q-btn>
+        &nbsp;
+        <q-btn
+          unelevated
+          rounded
+          label="Fermer"
+          color="primary"
+          class="full-width"
+          v-if="!isOpening"
+          :loading="isClosing"
+          :disable="progress === 0"
+          @click="close()"
+        >
+          <template>
+            <q-spinner-radio class="on-left" />
+          </template>
+        </q-btn>
+        &nbsp;
+        <q-btn
+          unelevated
+          rounded
+          label="Arrêter"
+          color="red"
+          class="full-width"
+          v-if="isOpening || isClosing"
+          @click="stop()"
+        />
+      </q-card-section>
+    </q-card>
+    <roller-shutter-settings :device="device" :open="isSettingsOpen" />
+  </div>
 </template>
 
 <script>
 import { defineComponent } from 'vue'
+import RollerShutterSettings from 'components/RollerShutterSettings.vue'
+import { setState } from '../api/state.js'
 
 export default defineComponent({
   name: 'device',
   props: ['client', 'device'],
+  components: { RollerShutterSettings },
   computed: {
     progress() {
       return Math.round(this.openedAt)
@@ -65,12 +75,18 @@ export default defineComponent({
       isOpening: false,
       isClosing: false,
       interval: null,
+      isSettingsOpen: false,
+      name: null,
+      duration: null
     }
   },
   created() {
-    this.openedAt = this.device.openedAt
+    this.openedAt = this.device.openedAt || 0
   },
   methods: {
+    openSettings() {
+      this.isSettingsOpen = true
+    },
     stop() {
       clearInterval(this.interval)
       if (this.isOpening) {
@@ -83,7 +99,7 @@ export default defineComponent({
       }
     },
     open() {
-      if (this.openedAt < 100 && !this.isClosing) {
+      if (this.openedAt < 100 && !this.isClosing && this.ratio > 0) {
         this.isOpening = true
 
         this.client.publish(`cmnd/${this.device.id}/Power1`, '1')
@@ -101,7 +117,7 @@ export default defineComponent({
       }
     },
     close() {
-      if (this.openedAt > 0 && !this.isOpening) {
+      if (this.openedAt > 0 && !this.isOpening && this.ratio > 0) {
         this.isClosing = true
 
         this.client.publish(`cmnd/${this.device.id}/Power2`, '1')
@@ -121,12 +137,8 @@ export default defineComponent({
   },
   watch: {
     async openedAt() {
-      await fetch(`http://192.168.0.25:9002/state/${this.device.id}`, { 
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json;charset=utf-8' },
-        body: JSON.stringify({ openedAt: this.openedAt })
-      })
-    }
-  }
+      await setState(this.device.id, { openedAt: this.openedAt })
+    },
+  },
 })
 </script>

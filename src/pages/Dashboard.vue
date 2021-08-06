@@ -28,6 +28,7 @@
 import { defineComponent } from 'vue'
 import * as mqtt from 'mqtt/dist/mqtt.min'
 import RollerShutter from '../components/RollerShutter.vue'
+import { getStates } from 'src/api/state'
 
 const MQTT_BROKER = 'ws://192.168.0.195:9001'
 
@@ -40,11 +41,6 @@ export default defineComponent({
       error: null,
       isConnected: false,
       isConnecting: false,
-      rollerShutter_01: {
-        id: 'tasmota_6C09EE',
-        name: 'Vollet roulant sud',
-        duration: 28,
-      },
       devices: null
     }
   },
@@ -89,7 +85,7 @@ export default defineComponent({
   watch: {
     async isConnected(status) {
       if(status) {
-        this.devices = await (await fetch('http://192.168.0.25:9002/state')).json()
+        this.devices = await getStates()
       }
     }
   }

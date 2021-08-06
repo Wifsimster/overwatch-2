@@ -1,7 +1,7 @@
 {
   "name": "overwatch-2",
   "version": "0.0.1",
-  "description": "A Quasar Framework app for personal domotic",
+  "description": "A Quasar Framework app for personal domotic with Tasmmota devices",
   "productName": "Quasar App",
   "author": {
     "email": "battistella@protonmail.com",
