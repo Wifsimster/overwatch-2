@@ -50,7 +50,7 @@
         />
       </q-card-section>
     </q-card>
-    <roller-shutter-settings @close="onCloseSettings()" :device="device" :open="isSettingsOpen" />
+    <roller-shutter-settings @close="onCloseSettings()" :client="client" :device="device" :open="isSettingsOpen" />
   </div>
 </template>
 
@@ -88,22 +88,31 @@ export default defineComponent({
     openSettings() {
       this.isSettingsOpen = true
     },
+    activateRelay(relayName) {
+      this.client.send(JSON.stringify({ prefix: 'cmnd', id: this.device.id, relay: relayName, value: 1 }))
+    },
+    disableRelay(relayName) {
+      this.client.send(JSON.stringify({ prefix: 'cmnd', id: this.device.id, relay: relayName, value: 0 }))
+    },
     stop() {
       clearInterval(this.interval)
       if (this.isOpening) {
         this.isOpening = false
-        this.client.publish(`cmnd/${this.device.id}/Power1`, '0')
+        // this.client.publish(`cmnd/${this.device.id}/Power1`, '0')
+        this.disableRelay('Power1')
       }
       if (this.isClosing) {
         this.isClosing = false
-        this.client.publish(`cmnd/${this.device.id}/Power2`, '0')
+        // this.client.publish(`cmnd/${this.device.id}/Power2`, '0')
+        this.disableRelay('Power2')
       }
     },
     open() {
       if (this.openedAt < 100 && !this.isClosing && this.ratio > 0) {
         this.isOpening = true
 
-        this.client.publish(`cmnd/${this.device.id}/Power1`, '1')
+        // this.client.publish(`cmnd/${this.device.id}/Power1`, '1')
+        this.activateRelay('Power1')
 
         this.interval = setInterval(async () => {
           if (this.openedAt < 100 - this.ratio) {
@@ -111,7 +120,8 @@ export default defineComponent({
           } else {
             clearInterval(this.interval)
             this.openedAt = 100
-            this.client.publish(`cmnd/${this.device.id}/Power1`, '0')
+            // this.client.publish(`cmnd/${this.device.id}/Power1`, '0')
+            this.disableRelay('Power1')
             this.isOpening = false
           }
         }, 1000)
@@ -121,7 +131,8 @@ export default defineComponent({
       if (this.openedAt > 0 && !this.isOpening && this.ratio > 0) {
         this.isClosing = true
 
-        this.client.publish(`cmnd/${this.device.id}/Power2`, '1')
+        // this.client.publish(`cmnd/${this.device.id}/Power2`, '1')
+        this.activateRelay('Power2')
 
         this.interval = setInterval(() => {
           if (this.openedAt > 0 + this.ratio) {
@@ -129,7 +140,8 @@ export default defineComponent({
           } else {
             clearInterval(this.interval)
             this.openedAt = 0
-            this.client.publish(`cmnd/${this.device.id}/Power2`, '0')
+            // this.client.publish(`cmnd/${this.device.id}/Power2`, '0')
+            this.disableRelay('Power2')
             this.isClosing = false
           }
         }, 1000)

@@ -17,7 +17,7 @@
     >
     <div v-if="!isConnecting && isConnected" class="column items-center wrap q-gutter-md q-pa-md">
       <div v-for="device in devices" :key="device.id">
-        <roller-shutter @update="setDevices()" v-if="device.status === 'Online' && device.model === 'Generic'" :client="mqttClient" :device="device" />
+        <roller-shutter @update="setDevices()" v-if="device.status === 'Online' && device.model === 'Generic'" :client="socket" :device="device" />
         <!-- TODO: Add more device type component -->
       </div>
     </div>
@@ -37,25 +37,26 @@ export default defineComponent({
       error: null,
       isConnected: false,
       isConnecting: false,
-      devices: null
+      devices: null,
+      socket: null
     }
   },
   created() { 
-    const socket = new WebSocket('ws://localhost:8080')
+    this.socket = new WebSocket('ws://localhost:8080')
     this.isConnecting = true
 
-    socket.onopen = () => {
+    this.socket.onopen = () => {
       this.isOnline()
     }
 
-    socket.onmessage = (event) => {
+    this.socket.onmessage = (event) => {
       let message = JSON.parse(event.data)
       if(message.devices) {
         this.devices = message.devices
       }
     }
     
-    socket.onclose = function(event) {
+    this.socket.onclose = function(event) {
       if (event.wasClean) {
         console.log(`[WS] Connection closed cleanly, code=${event.code} reason=${event.reason}`)
       } else {
@@ -64,7 +65,7 @@ export default defineComponent({
       this.isOffline
     }
 
-    socket.onerror = (error) => {
+    this.socket.onerror = (error) => {
       console.warn(`[WS] ${error.message}`)
     }
   },

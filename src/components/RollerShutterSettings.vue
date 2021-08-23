@@ -7,20 +7,30 @@
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-          <q-input v-model="name" placeholder="Name" />
-          <q-input type="number" min="1" max="30" v-model="duration" placeholder="Duration" hint="Time the roller shutter take to open completely " />
+          <q-input v-model="name" placeholder="Nom" />
+          <q-input type="number" min="1" max="30" v-model="duration" placeholder="Duration" hint="Temps que met le volet roulant à s'ouvrir complètement (en secondes)" />
         </q-card-section>
 
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" color="primary" v-close-popup />
-          <q-btn label="Submit" color="primary" @click="save()" />
+        <q-card-section class="q-pt-none">
+          <q-btn outline label="Forcer en fermeture" color="red" @click="setClose()" />
+          &nbsp;
+          <q-btn outline label="Forcer en ouverture" color="red" @click="setOpen()" />
+        </q-card-section>
+
+        
+        <q-card-section class="q-pt-none">
+          <div class="text-caption float-left">Dernière mise à jour: {{ device.lastUpdate }}</div>
+        </q-card-section>
+
+        <q-card-actions align="right">          
+          <q-btn flat label="Annuler" color="primary" v-close-popup />
+          <q-btn label="Sauvegarder" color="primary" @click="save()" />
         </q-card-actions>
       </q-card>
     </q-dialog>
 </template>
 
 <script>
-import { setDevice } from '../api/device'
 export default {
   emits: ['close'],
   props: {
@@ -31,6 +41,10 @@ export default {
     device: {
       type: Object,
       require: true
+    },
+    client: {
+      type: Object,
+      required: true
     }
   },
   data() {
@@ -48,11 +62,19 @@ export default {
     validate() {
       return this.duration > 0 && this.duration <= 30
     },
-    async save() {
+    save() {
       if(this.validate()) {
-        await setDevice(this.device.id, { name: this.name, duration: this.duration })
+        this.client.send(JSON.stringify({ prefix: 'update', device: { id: this.device.id, name: this.name, duration: this.duration } }))
         this.$emit('close')
       }
+    },
+    setClose() {
+      this.client.send(JSON.stringify({ prefix: 'update', device: { id: this.device.id, openedAt: 0 } }))
+      this.$emit('close')
+    },
+    setOpen() {
+      this.client.send(JSON.stringify({ prefix: 'update', device: { id: this.device.id, openedAt: 100 } }))
+      this.$emit('close')
     }
   },
   watch: {
