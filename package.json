@@ -15,7 +15,6 @@
   "dependencies": {
     "@quasar/extras": "^1.10.11",
     "core-js": "^3.16.2",
-    "mqtt": "^4.2.8",
     "quasar": "^2.0.4"
   },
   "devDependencies": {
