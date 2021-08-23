@@ -17,7 +17,7 @@
     >
     <div v-if="!isConnecting && isConnected" class="column items-center wrap q-gutter-md q-pa-md">
       <div v-for="device in devices" :key="device.id">
-        <roller-shutter @update="setDevices()" v-if="device.status === 'Online' && device.model === 'Generic'" :client="socket" :device="device" />
+        <roller-shutter v-if="device.status === 'Online' && device.model === 'Generic'" :client="socket" :device="device" />
         <!-- TODO: Add more device type component -->
       </div>
     </div>

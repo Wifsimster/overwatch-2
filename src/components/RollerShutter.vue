@@ -82,9 +82,12 @@ export default defineComponent({
     }
   },
   created() {
-    this.openedAt = this.device.openedAt || 0
+    this.init()
   },
   methods: {
+    init() {
+      this.openedAt = this.device.openedAt || 0
+    },
     openSettings() {
       this.isSettingsOpen = true
     },
@@ -149,13 +152,15 @@ export default defineComponent({
     },
     onCloseSettings() {
       this.isSettingsOpen = false
-      this.$emit('update')
     },
   },
   watch: {
     async openedAt() {
       await setDevice(this.device.id, { openedAt: this.openedAt })
     },
+    device() {
+      this.init()
+    }
   },
 })
 </script>
