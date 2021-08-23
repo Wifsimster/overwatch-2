@@ -6,23 +6,21 @@
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
-        <q-card-section class="q-pt-none">
-          <q-input v-model="name" placeholder="Nom" />
-          <q-input type="number" min="1" max="30" v-model="duration" placeholder="Duration" hint="Temps que met le volet roulant à s'ouvrir complètement (en secondes)" />
+        <q-card-section>
+          <q-input v-model="name" placeholder="Nom" />          
+          <q-input type="number" min="1" max="30" v-model="duration" placeholder="Duration" hint="Temps d'ouverture complète (en secondes)" />
         </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-btn outline label="Forcer en fermeture" color="red" @click="setClose()" />
-          &nbsp;
-          <q-btn outline label="Forcer en ouverture" color="red" @click="setOpen()" />
-        </q-card-section>
-
         
-        <q-card-section class="q-pt-none">
-          <div class="text-caption float-left">Dernière mise à jour: {{ device.lastUpdate }}</div>
+        <q-card-section class="row">
+            <div class="col q-pr-md">
+              <q-btn outline label="Forcer en fermeture" color="red" @click="setClose()" />
+            </div>
+            <div class="col">
+              <q-btn outline label="Forcer en ouverture" color="red" @click="setOpen()" />
+            </div>
         </q-card-section>
 
-        <q-card-actions align="right">          
+        <q-card-actions align="right">
           <q-btn flat label="Annuler" color="primary" v-close-popup />
           <q-btn label="Sauvegarder" color="primary" @click="save()" />
         </q-card-actions>

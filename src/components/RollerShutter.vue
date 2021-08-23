@@ -5,17 +5,25 @@
         <div class="text-h6">{{ device.name || device.id }}
           <q-icon name="settings" @click="openSettings()" />
         </div>
-        <div class="text-subtitle1">Ouverture {{ typeof progress === 'number' ? progress + '%' : 'inconnue' }}</div>
-        <br />
+        <!-- <div class="text-subtitle1">Ouverture {{ typeof progress === 'number' ? progress + '%' : 'inconnue' }}</div> -->
+         <q-knob
+      show-value
+      class="text-light-blue q-ma-md"
+      v-model="progress"
+      size="60px"
+       :thickness="0.22"
+      color="primary"
+      track-color="grey-3"
+      disable
+    />
         <q-btn
           unelevated
           rounded
           label="Ouvrir"
           color="primary"
           class="full-width"
-          v-if="!device.isClosing"
+          v-if="!device.isClosing && progress < 100"
           :loading="device.isOpening"
-          :disable="progress === 100"
           @click="open()"
         >
           <template>
@@ -29,9 +37,8 @@
           label="Fermer"
           color="primary"
           class="full-width"
-          v-if="!device.isOpening"
+          v-if="!device.isOpening && progress > 0"
           :loading="device.isClosing"
-          :disable="progress === 0"
           @click="close()"
         >
           <template>
@@ -45,7 +52,7 @@
           label="Arrêter"
           color="red"
           class="full-width"
-          v-if="device.isOpening || device.isClosing"
+          v-if="(device.isOpening || device.isClosing) && progress > 0 && progress < 100"
           @click="stop()"
         />
       </q-card-section>
