@@ -7,13 +7,13 @@
       </template>
     </q-banner>
     <q-banner v-if="isConnecting" inline-actions class="text-white bg-green"
-      >Connection en cours au broker MQTT ...</q-banner
+      >Connection au serveur en cours ...</q-banner
     >
     <q-banner
       v-if="!isConnecting && !isConnected"
       inline-actions
       class="text-white bg-red"
-      >Broker inaccessible !</q-banner
+      >Serveur inaccessible !</q-banner
     >
     <div v-if="!isConnecting && isConnected" class="column items-center wrap q-gutter-md q-pa-md">
       <div v-for="device in devices" :key="device.id">
@@ -26,11 +26,7 @@
 
 <script>
 import { defineComponent } from 'vue'
-import * as mqtt from 'mqtt/dist/mqtt.min'
 import RollerShutter from '../components/RollerShutter.vue'
-import { getDevices } from '../api/device'
-
-const MQTT_BROKER = 'ws://192.168.0.195:9001'
 
 export default defineComponent({
   name: 'Dashboard',
@@ -45,51 +41,45 @@ export default defineComponent({
     }
   },
   created() { 
+    const socket = new WebSocket('ws://localhost:8080')
     this.isConnecting = true
-    this.mqttClient = mqtt.connect(MQTT_BROKER, {
-      connectTimeout: 5 * 1000,
-      reconnectPeriod: 0,
-    })
 
-    this.mqttClient.on('connect', () => {
-      this.isConnecting = false
-      this.isConnected = true
-    })
+    socket.onopen = () => {
+      this.isOnline()
+    }
 
-    this.mqttClient.on('reconnect', () => {
-      console.log('reconnect')
-      this.isConnecting = true
-      this.isConnected = false
-    })
+    socket.onmessage = (event) => {
+      let message = JSON.parse(event.data)
+      if(message.devices) {
+        this.devices = message.devices
+      }
+    }
+    
+    socket.onclose = function(event) {
+      if (event.wasClean) {
+        console.log(`[WS] Connection closed cleanly, code=${event.code} reason=${event.reason}`)
+      } else {
+        console.log('[WS] Connection died')
+      }
+      this.isOffline
+    }
 
-    this.mqttClient.on('close', () => {
-      console.log('close')
-      this.isConnecting = false
-      this.isConnected = false
-    })
-
-    this.mqttClient.on('message', (topic, message) => {
-      console.log(topic + ':' + message.toString())
-    })
-
-    this.mqttClient.on('error', (err) => {
-      console.log('error', err)
-      this.error = err
-    })
-  },
-  methods: {
-    closeError() {
-      this.error = null
-    },
-    async setDevices() {
-      this.devices = await getDevices()
+    socket.onerror = (error) => {
+      console.warn(`[WS] ${error.message}`)
     }
   },
-  watch: {
-    async isConnected(status) {
-      if(status) {
-        await this.setDevices()
-      }
+  methods: {
+    isOnline() {
+      this.isConnecting = false
+      this.isConnected = true
+      console.log('[WS] Connection established !')
+    },
+    isOffline() {
+      this.isConnecting = false
+      this.isConnected = false
+    },
+    closeError() {
+      this.error = null
     }
   }
 })
