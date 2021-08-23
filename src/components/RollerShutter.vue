@@ -5,7 +5,7 @@
         <div class="text-h6">{{ device.name || device.id }}
           <q-icon name="settings" @click="openSettings()" />
         </div>
-        <div class="text-subtitle1">Ouverture {{ progress }}%</div>
+        <div class="text-subtitle1">Ouverture {{ typeof progress === 'number' ? progress + '%' : 'inconnue' }}</div>
         <br />
         <q-btn
           unelevated
@@ -13,8 +13,8 @@
           label="Ouvrir"
           color="primary"
           class="full-width"
-          v-if="!isClosing"
-          :loading="isOpening"
+          v-if="!device.isClosing"
+          :loading="device.isOpening"
           :disable="progress === 100"
           @click="open()"
         >
@@ -29,8 +29,8 @@
           label="Fermer"
           color="primary"
           class="full-width"
-          v-if="!isOpening"
-          :loading="isClosing"
+          v-if="!device.isOpening"
+          :loading="device.isClosing"
           :disable="progress === 0"
           @click="close()"
         >
@@ -45,7 +45,7 @@
           label="Arrêter"
           color="red"
           class="full-width"
-          v-if="isOpening || isClosing"
+          v-if="device.isOpening || device.isClosing"
           @click="stop()"
         />
       </q-card-section>
@@ -57,7 +57,6 @@
 <script>
 import { defineComponent } from 'vue'
 import RollerShutterSettings from 'components/RollerShutterSettings.vue'
-import { setDevice } from '../api/device.js'
 
 export default defineComponent({
   name: 'device',
@@ -66,88 +65,37 @@ export default defineComponent({
   components: { RollerShutterSettings },
   computed: {
     progress() {
-      return Math.round(this.openedAt)
+      return Math.round(this.device.openedAt)
     },
   },
   data() {
     return {
-      ratio: 100 / this.device.duration,
-      openedAt: 0,
-      isOpening: false,
-      isClosing: false,
-      interval: null,
+      ratio: null,
       isSettingsOpen: false,
-      name: null,
-      duration: null
+      name: null
     }
   },
   created() {
     this.init()
   },
   methods: {
-    init() {
-      this.openedAt = this.device.openedAt || 0
+    init() {      
+      this.ratio = 100 / this.device.duration
     },
     openSettings() {
       this.isSettingsOpen = true
     },
-    activateRelay(relayName) {
-      this.client.send(JSON.stringify({ prefix: 'cmnd', id: this.device.id, relay: relayName, value: 1 }))
-    },
-    disableRelay(relayName) {
-      this.client.send(JSON.stringify({ prefix: 'cmnd', id: this.device.id, relay: relayName, value: 0 }))
-    },
     stop() {
-      clearInterval(this.interval)
-      if (this.isOpening) {
-        this.isOpening = false
-        // this.client.publish(`cmnd/${this.device.id}/Power1`, '0')
-        this.disableRelay('Power1')
-      }
-      if (this.isClosing) {
-        this.isClosing = false
-        // this.client.publish(`cmnd/${this.device.id}/Power2`, '0')
-        this.disableRelay('Power2')
-      }
+      this.client.send(JSON.stringify({ prefix: 'stop', device: { id: this.device.id } }))
     },
     open() {
-      if (this.openedAt < 100 && !this.isClosing && this.ratio > 0) {
-        this.isOpening = true
-
-        // this.client.publish(`cmnd/${this.device.id}/Power1`, '1')
-        this.activateRelay('Power1')
-
-        this.interval = setInterval(async () => {
-          if (this.openedAt < 100 - this.ratio) {
-            this.openedAt += this.ratio
-          } else {
-            clearInterval(this.interval)
-            this.openedAt = 100
-            // this.client.publish(`cmnd/${this.device.id}/Power1`, '0')
-            this.disableRelay('Power1')
-            this.isOpening = false
-          }
-        }, 1000)
+      if (this.device.openedAt < 100 && !this.device.isClosing && this.ratio > 0) {
+        this.client.send(JSON.stringify({ prefix: 'open', device: { id: this.device.id } }))
       }
     },
     close() {
-      if (this.openedAt > 0 && !this.isOpening && this.ratio > 0) {
-        this.isClosing = true
-
-        // this.client.publish(`cmnd/${this.device.id}/Power2`, '1')
-        this.activateRelay('Power2')
-
-        this.interval = setInterval(() => {
-          if (this.openedAt > 0 + this.ratio) {
-            this.openedAt -= this.ratio
-          } else {
-            clearInterval(this.interval)
-            this.openedAt = 0
-            // this.client.publish(`cmnd/${this.device.id}/Power2`, '0')
-            this.disableRelay('Power2')
-            this.isClosing = false
-          }
-        }, 1000)
+      if (this.device.openedAt > 0 && !this.device.isOpening && this.ratio > 0) {
+        this.client.send(JSON.stringify({ prefix: 'close', device: { id: this.device.id } }))
       }
     },
     onCloseSettings() {
@@ -155,9 +103,6 @@ export default defineComponent({
     },
   },
   watch: {
-    async openedAt() {
-      await setDevice(this.device.id, { openedAt: this.openedAt })
-    },
     device() {
       this.init()
     }
