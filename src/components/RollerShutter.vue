@@ -70,18 +70,11 @@ export default defineComponent({
   },
   data() {
     return {
-      ratio: null,
       isSettingsOpen: false,
       name: null
     }
   },
-  created() {
-    this.init()
-  },
   methods: {
-    init() {      
-      this.ratio = 100 / this.device.duration
-    },
     openSettings() {
       this.isSettingsOpen = true
     },
@@ -89,23 +82,18 @@ export default defineComponent({
       this.client.send(JSON.stringify({ prefix: 'stop', device: { id: this.device.id } }))
     },
     open() {
-      if (this.device.openedAt < 100 && !this.device.isClosing && this.ratio > 0) {
+      if (this.device.openedAt < 100 && !this.device.isClosing && this.device.duration > 0) {
         this.client.send(JSON.stringify({ prefix: 'open', device: { id: this.device.id } }))
       }
     },
     close() {
-      if (this.device.openedAt > 0 && !this.device.isOpening && this.ratio > 0) {
+      if (this.device.openedAt > 0 && !this.device.isOpening && this.device.duration > 0) {
         this.client.send(JSON.stringify({ prefix: 'close', device: { id: this.device.id } }))
       }
     },
     onCloseSettings() {
       this.isSettingsOpen = false
     },
-  },
-  watch: {
-    device() {
-      this.init()
-    }
   },
 })
 </script>
