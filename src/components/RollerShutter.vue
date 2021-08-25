@@ -72,7 +72,10 @@ export default defineComponent({
   components: { RollerShutterSettings },
   computed: {
     progress() {
-      return Math.round(this.device.openedAt)
+      if(typeof this.device.openedAt === 'number') {
+        return Math.round(this.device.openedAt)
+      }
+      return 0
     },
   },
   data() {
