@@ -3,7 +3,7 @@
       <q-card style="width: 700px; max-width: 80vw;">
         <q-card-section class="row items-center q-pb-none">
           <div class="text-h6 col">{{ device.id }}</div>
-          <q-btn icon="close" flat round dense v-close-popup />
+          <q-btn icon="close" flat round dense @click="close()" />
         </q-card-section>
 
         <q-card-section>
@@ -20,8 +20,17 @@
             </div>
         </q-card-section>
 
+        <q-card-section class="row">
+          <div class="col">
+            <q-icon name="wifi" /> {{ device.wifi.Signal }}dB
+          </div>
+          <div class="col">
+            <q-icon name="dns" /> {{ device.ip }}
+          </div>
+        </q-card-section>
+
         <q-card-actions align="right">
-          <q-btn flat label="Annuler" color="primary" v-close-popup />
+          <q-btn flat label="Annuler" color="primary" @click="close()" />
           <q-btn label="Sauvegarder" color="primary" @click="save()" />
         </q-card-actions>
       </q-card>
@@ -72,6 +81,9 @@ export default {
     },
     setOpen() {
       this.client.send(JSON.stringify({ prefix: 'update', device: { id: this.device.id, openedAt: 100 } }))
+      this.$emit('close')
+    },
+    close() {
       this.$emit('close')
     }
   },
