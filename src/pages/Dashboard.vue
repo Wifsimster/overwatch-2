@@ -41,8 +41,8 @@ export default defineComponent({
       socket: null
     }
   },
-  created() { 
-    this.socket = new WebSocket(`ws://${location.host}:8080`)
+  created() {
+    this.socket = new WebSocket(`ws://${location.hostname}:8080`)
     this.isConnecting = true
 
     this.socket.onopen = () => {
